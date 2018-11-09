@@ -1,0 +1,51 @@
+version: '2'
+
+services:
+    db:
+        image: mysql:5.7
+        volumes:
+            - "./.data/db:/var/lib/mysql"
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    php:
+        build:
+            context: fpm
+            args:
+                TIMEZONE: ${TIMEZONE}
+        ports:
+            - 4141:4141
+        volumes:
+            - ${SYMFONY_APP_PATH}:/var/www
+            - ./logs:/var/www/src/Infrastructure/logs
+    nginx:
+        build: nginx
+        ports:
+            - 8080:80
+        volumes_from:
+            - php
+        volumes:
+            - ./logs/nginx/:/var/log/nginx
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - "82:80"
+        environment:
+            PMA_HOST: db
+            PMA_USER: root
+            PMA_PASSWORD: root
+            PMA_PORT: 3306
+
+
+#    elk:
+#        image: willdurand/elk
+#        ports:
+#            - 81:80
+#        volumes:
+#            - ./elk/logstash:/etc/logstash
+#            - ./elk/logstash/patterns:/opt/logstash/patterns
+#        volumes_from:
+#            - php
+#            - nginx
